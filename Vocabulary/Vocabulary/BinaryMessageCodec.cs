@@ -4,39 +4,68 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Vocabulary;
 
 namespace Vocabulary
 {
-    public interface ICodec
+    abstract class ICodec<T>
     {
-        byte[] Encode(Message message);
-        String Decode(byte[] array);
+        public abstract byte[] Encode(T message);
+        public abstract T Decode(Stream source);
+
+        public T Decode(byte[] packet)
+        {
+            using (Stream payload = new MemoryStream(packet, 0, packet.Length, false))
+                return Decode(payload);
+        }
     }
 
-    namespace Vocabulary
+
+    abstract class BinaryCodec<T> : ICodec<T>
     {
-        public class BinaryMessageCodec : ICodec
+        public abstract void WriteBinaryData(BinaryWriter writer, T message);
+        public abstract T ReadBinaryData(BinaryReader reader);
+
+        public override byte[] Encode(T message)
         {
-            public byte[] Encode(Message message)
+            using (MemoryStream ms = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(ms))
             {
-                using (MemoryStream ms = new MemoryStream())
-                using (BinaryWriter writer = new BinaryWriter(ms))
-                {
-                    //writer.Write(message.packet);
+                WriteBinaryData(writer, message);
 
-                    writer.Flush();
-                    return ms.ToArray();
-                }
+                writer.Flush();
+                return ms.ToArray();
             }
+        }
 
-            public String Decode(byte[] array)
+        public override T Decode(Stream source)
+        {
+            using (BinaryReader reader = new BinaryReader(source))
             {
-                using (MemoryStream ms = new MemoryStream(array))
-                using (BinaryReader reader = new BinaryReader(ms))
-                {
-                    return reader.ReadString();
-                }
+                return ReadBinaryData(reader);
             }
+        }
+    }
+
+
+    class PacketBinaryCodec : BinaryCodec<Packet>
+    {
+        public override void WriteBinaryData(BinaryWriter writer, Packet message)
+        {
+            writer.Write((int)message.Type);
+            writer.Write(message.BodyLength);
+            writer.Write(message.Body);
+        }
+
+        public override Packet ReadBinaryData(BinaryReader reader)
+        {
+            int typeRaw = reader.ReadInt32();
+            int bodyLength = reader.ReadInt32();
+
+            byte[] body = new byte[bodyLength];
+            reader.Read(body, 0, bodyLength);
+
+            return new Packet(typeRaw, bodyLength, body);
         }
     }
 }

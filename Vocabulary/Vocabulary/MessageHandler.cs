@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace Vocabulary
 {
-    public enum MessageType
+    public enum PacketBodyType
     {
-        TransferRequest = 1,
-        TransferConfirm = 2,
-        Temp = 3,
-        Data = 4,
-        DataACK = 5,
-        OutRequest = 6,
-        OutConfirm = 7,
+        NewFile = 1,
+        AckNewFile = 10,
+        Data = 2,
+        AckData = 20,
+        Discon = 3,
+        AckDiscon = 30
     };
 
     public enum Sense
@@ -30,21 +29,49 @@ namespace Vocabulary
         Data = 3,
     };
 
-    public abstract class Message
+    public class Packet
     {
-        MessageType messageType;
-        Sense messageSense;
-        Content content;
+        private PacketBodyType _type;
+        private int _bodyLength;
+        private byte[] _body;
+
+        public Packet(int typeRaw, int bodyLength, byte[] body) {
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
+        }
+
+        public PacketBodyType Type
+        {
+            get
+            {
+                return _type;
+            }
+        }
+        public int BodyLength
+        {
+            get
+            {
+                return _bodyLength;
+            }
+        }
+        public byte[] Body
+        {
+            get
+            {
+                return _body;
+            }
+        }
     }
 
-    public class TransferRequest : Message
+    public class NewFile : Packet
     {
-        private MessageType _messageType = MessageType.TransferRequest;
+        private PacketBodyType _messageType = PacketBodyType.NewFile;
         private Sense _messageSense = Sense.SenderToReceiver;
         private Content _content = Content.Request;
         private String _command = "PUT ";
 
-        public TransferRequest(String file)
+        public NewFile(String file)
         {
             _command += file;
         }
@@ -58,9 +85,9 @@ namespace Vocabulary
         }
     }
 
-    public class TransferConfirm : Message
+    public class AckNewFile : Packet
     {
-        private MessageType _messageType = MessageType.TransferConfirm;
+        private PacketBodyType _messageType = PacketBodyType.AckNewFile;
         private Sense _messageSense = Sense.ReceiverToSender;
         private Content _content = Content.Confirmation;
         private String _command = "OK";
@@ -74,9 +101,9 @@ namespace Vocabulary
         }
     }
 
-    public class Data : Message
+    public class Data : Packet
     {
-        private MessageType _messageType = MessageType.Data;
+        private PacketBodyType _messageType = PacketBodyType.Data;
         private Sense _messageSense = Sense.SenderToReceiver;
         private Content _content = Content.Data;
         private int _nSec = 0;
@@ -88,14 +115,14 @@ namespace Vocabulary
         }
     }
 
-    public class DataACK : Message
+    public class AckData : Packet
     {
-        private MessageType _messageType = MessageType.DataACK;
+        private PacketBodyType _messageType = PacketBodyType.AckData;
         private Sense _messageSense = Sense.ReceiverToSender;
         private Content _content = Content.Request;
         private int _nSec;
 
-        public DataACK(int nSec)
+        public AckData(int nSec)
         {
             _nSec = nSec;
         }
@@ -109,31 +136,31 @@ namespace Vocabulary
         }
     }
 
-    public class OutRequest : Message
+    public class Discon : Packet
     {
-        private MessageType _messageType = MessageType.OutRequest;
+        private PacketBodyType _messageType = PacketBodyType.Discon;
         private Sense _messageSense = Sense.SenderToReceiver;
         private Content _content = Content.Request;
     }
 
-    public class OutConfirm : Message
+    public class AckDiscon : Packet
     {
-        private MessageType _messageType = MessageType.OutConfirm;
+        private PacketBodyType _messageType = PacketBodyType.AckDiscon;
         private Sense _messageSense = Sense.ReceiverToSender;
         private Content _content = Content.Confirmation;
     }
 
     public abstract class State
     {
-        protected delegate void MessageHandler(MessageType type);
-        private Dictionary<MessageType, MessageHandler> _map = new Dictionary<MessageType, MessageHandler>();
+        protected delegate void MessageHandler(PacketBodyType type);
+        private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
 
-        protected void RegisterHandler(MessageType type, MessageHandler handler)
+        protected void RegisterHandler(PacketBodyType type, MessageHandler handler)
         {
             _map.Add(type, handler);
         }
 
-        public void HandleMessage(MessageType type)
+        public void HandleMessage(PacketBodyType type)
         {
             try
             {
@@ -152,10 +179,10 @@ namespace Vocabulary
     {
         public WaitConfirmation()
         {
-            RegisterHandler(MessageType.Temp, SendRequest);
+            //(PacketBodyType.Temp, SendRequest);
         }
 
-        protected void SendRequest(MessageType type)
+        protected void SendRequest(PacketBodyType type)
         {
 
         }

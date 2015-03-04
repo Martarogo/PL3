@@ -1,0 +1,5 @@
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\Vocabulary\bin\Debug\Vocabulary.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\Vocabulary\bin\Debug\Vocabulary.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\Vocabulary\obj\Debug\Vocabulary.csprojResolveAssemblyReference.cache
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\Vocabulary\obj\Debug\Vocabulary.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\Vocabulary\obj\Debug\Vocabulary.pdb

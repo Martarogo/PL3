@@ -31,9 +31,9 @@ namespace Vocabulary
 
     public class Packet
     {
-        private PacketBodyType _type;
-        private int _bodyLength;
-        private byte[] _body;
+        protected PacketBodyType _type;
+        protected int _bodyLength;
+        protected byte[] _body;
 
         public Packet(int typeRaw, int bodyLength, byte[] body) {
             _type = (PacketBodyType)typeRaw;
@@ -66,14 +66,13 @@ namespace Vocabulary
 
     public class NewFile : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.NewFile;
-        private Sense _messageSense = Sense.SenderToReceiver;
-        private Content _content = Content.Request;
         private String _command = "PUT ";
 
-        public NewFile(String file)
+        public NewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
-            _command += file;
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
         }
 
         public String Command
@@ -87,10 +86,14 @@ namespace Vocabulary
 
     public class AckNewFile : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.AckNewFile;
-        private Sense _messageSense = Sense.ReceiverToSender;
-        private Content _content = Content.Confirmation;
         private String _command = "OK";
+
+        public AckNewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        {
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
+        }
 
         public String Command
         {
@@ -103,28 +106,26 @@ namespace Vocabulary
 
     public class Data : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.Data;
-        private Sense _messageSense = Sense.SenderToReceiver;
-        private Content _content = Content.Data;
         private int _nSec = 0;
         private byte[] _nBytes = new byte[512];
 
-        public Data(byte[] nbytes)
+        public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
-            _nBytes = nbytes;
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
         }
     }
 
     public class AckData : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.AckData;
-        private Sense _messageSense = Sense.ReceiverToSender;
-        private Content _content = Content.Request;
         private int _nSec;
 
-        public AckData(int nSec)
+        public AckData(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
-            _nSec = nSec;
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
         }
 
         public int NSec
@@ -138,16 +139,22 @@ namespace Vocabulary
 
     public class Discon : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.Discon;
-        private Sense _messageSense = Sense.SenderToReceiver;
-        private Content _content = Content.Request;
+        public Discon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        {
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
+        }
     }
 
     public class AckDiscon : Packet
     {
-        private PacketBodyType _messageType = PacketBodyType.AckDiscon;
-        private Sense _messageSense = Sense.ReceiverToSender;
-        private Content _content = Content.Confirmation;
+        public AckDiscon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        {
+            _type = (PacketBodyType)typeRaw;
+            _bodyLength = BodyLength;
+            _body = body;
+        }
     }
 
     public abstract class State

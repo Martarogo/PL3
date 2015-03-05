@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -48,12 +49,25 @@ namespace Client
         public WaitConfirmation(Client context) : base(context)
         {
             RegisterHandler(PacketBodyType.AckNewFile, OnAckNewFile);
-            //(PacketBodyType.Temp, SendRequest);
         }
 
         protected void OnAckNewFile(PacketBodyType packetType)
         {
+            _context.ChangeState(new SendData(_context));
+        }
+    }
 
+
+    class SendData : State
+    {
+        public SendData(Client context) : base(context)
+        {
+            RegisterHandler(PacketBodyType.AckData, OnAckData);
+        }
+
+        protected void OnAckData(PacketBodyType packetType)
+        {
+            _context.Send();
         }
     }
 
@@ -64,7 +78,7 @@ namespace Client
         private readonly int SERVERPORT = 23456;
         private int sec = 1;
         private String strRec;
-        private byte[] bFile, bSent;
+        private byte[] bFile, bSent, bReceived;
         private State _state;
 
         UdpClient client = null;
@@ -106,7 +120,29 @@ namespace Client
 
         public PacketBodyType ReceivePacket()
         {
-            return (PacketBodyType)4;
+            IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
+
+            bReceived = client.Receive(ref remoteIPEndPoint);
+
+            return encoding.Decode(bReceived).Type;
+        }
+
+        public void Send()
+        {
+            Packet data;
+            if (bFile.Length > 512)
+            {
+                data = new Data((int)PacketBodyType.Data, 512, bFile);
+                bFile.
+            }
+            else
+            {
+                data = new Data((int)PacketBodyType.Data, bFile.Length, bFile);
+            }
+
+            bSent = encoding.Encode(data);
+
+            client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
         }
 
         public void ChangeState(State state)

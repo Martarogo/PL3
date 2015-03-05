@@ -97,13 +97,20 @@ namespace Vocabulary
     public class Data : Packet
     {
         private int _nSec = 0;
-        private byte[] _nBytes = new byte[512];
 
         public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
+        }
+
+        public int NSec
+        {
+            get
+            {
+                return _nSec;
+            }
         }
     }
 
@@ -147,41 +154,4 @@ namespace Vocabulary
         }
     }
 
-    public abstract class State
-    {
-        protected delegate void MessageHandler(PacketBodyType type);
-        private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
-
-        protected void RegisterHandler(PacketBodyType type, MessageHandler handler)
-        {
-            _map.Add(type, handler);
-        }
-
-        public void HandleMessage(PacketBodyType type)
-        {
-            try
-            {
-                MessageHandler handler = _map[type];
-                handler.Invoke(type);
-            }
-            catch (KeyNotFoundException)
-            {
-                //OnUnknownMessage(type);
-            }
-        }
-    }
-
-
-    public class WaitConfirmation: State
-    {
-        public WaitConfirmation()
-        {
-            //(PacketBodyType.Temp, SendRequest);
-        }
-
-        protected void SendRequest(PacketBodyType type)
-        {
-
-        }
-    }
 }

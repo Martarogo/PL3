@@ -49,12 +49,18 @@ namespace Client
         public WaitConfirmation(Client context) : base(context)
         {
             RegisterHandler(PacketBodyType.AckNewFile, OnAckNewFile);
+            RegisterHandler(PacketBodyType.AckDiscon, OnAckDiscon);
         }
 
         protected void OnAckNewFile(PacketBodyType packetType)
         {
             _context.Send();
             _context.ChangeState(new SendData(_context));
+        }
+
+        protected void OnAckDiscon(PacketBodyType packetType)
+        {
+            _context.Close();
         }
     }
 
@@ -131,21 +137,29 @@ namespace Client
 
         public void Send()
         {
-            int length = readFile();
+            int length = ReadFile();
 
             Packet data = new Data((int)PacketBodyType.Data, length, bFile);
 
             bSent = encoding.Encode(data);
 
             client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
+
+            if (length < 512)
+            {
+                Packet discon = new Discon((int)PacketBodyType.Discon,0,null);
+                ChangeState(new WaitConfirmation(this));
+            }
         }
 
-        private int readFile()
+        private int ReadFile()
         {
             FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
             
             return fs.Read(bFile, 0, 512);
         }
+
+        private void Close()
 
         public void ChangeState(State state)
         {

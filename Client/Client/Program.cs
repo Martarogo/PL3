@@ -53,6 +53,7 @@ namespace Client
 
         protected void OnAckNewFile(PacketBodyType packetType)
         {
+            _context.Send();
             _context.ChangeState(new SendData(_context));
         }
     }
@@ -79,6 +80,7 @@ namespace Client
         private int sec = 1;
         private String strRec;
         private byte[] bFile, bSent, bReceived;
+        private readonly String fichName = "fichero.txt";
         private State _state;
 
         UdpClient client = null;
@@ -90,7 +92,7 @@ namespace Client
             {
                 client = new UdpClient();
 
-                readFile();
+                bFile = Encoding.UTF8.GetBytes(fichName);
 
                 Packet newFile = new NewFile((int)PacketBodyType.NewFile, bFile.Length, bFile);
 
@@ -129,39 +131,25 @@ namespace Client
 
         public void Send()
         {
-            Packet data;
-            if (bFile.Length > 512)
-            {
-                data = new Data((int)PacketBodyType.Data, 512, bFile);
-                bFile.
-            }
-            else
-            {
-                data = new Data((int)PacketBodyType.Data, bFile.Length, bFile);
-            }
+            int length = readFile();
+
+            Packet data = new Data((int)PacketBodyType.Data, length, bFile);
 
             bSent = encoding.Encode(data);
 
             client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
         }
 
+        private int readFile()
+        {
+            FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
+            
+            return fs.Read(bFile, 0, 512);
+        }
+
         public void ChangeState(State state)
         {
             _state = state;
-        }
-
-        private void readFile()
-        {
-            bFile = new byte[new FileInfo("fichero.txt").Length];
-
-            Console.WriteLine("BodyLength: " + bFile.Length);
-
-            FileStream fs = new FileStream("fichero.txt", FileMode.Open, FileAccess.Read);
-
-            for (int i = 0; i < bFile.Length; i++)
-            {
-                bFile[i] = (byte)fs.ReadByte();
-            }
         }
         
         private void processException(Exception e)

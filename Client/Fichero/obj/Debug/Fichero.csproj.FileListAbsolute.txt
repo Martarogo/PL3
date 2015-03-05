@@ -1,0 +1,5 @@
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Fichero\bin\Debug\Fichero.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Fichero\bin\Debug\Fichero.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Fichero\obj\Debug\Fichero.csprojResolveAssemblyReference.cache
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Fichero\obj\Debug\Fichero.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Fichero\obj\Debug\Fichero.pdb

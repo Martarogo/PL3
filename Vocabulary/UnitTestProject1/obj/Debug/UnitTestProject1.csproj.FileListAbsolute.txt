@@ -1,0 +1,7 @@
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\bin\Debug\UnitTestProject1.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\bin\Debug\UnitTestProject1.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\bin\Debug\Vocabulary.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\bin\Debug\Vocabulary.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\obj\Debug\UnitTestProject1.csprojResolveAssemblyReference.cache
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\obj\Debug\UnitTestProject1.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Vocabulary\UnitTestProject1\obj\Debug\UnitTestProject1.pdb

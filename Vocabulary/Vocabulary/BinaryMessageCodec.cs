@@ -8,7 +8,7 @@ using Vocabulary;
 
 namespace Vocabulary
 {
-    abstract class ICodec<T>
+    public abstract class ICodec<T>
     {
         public abstract byte[] Encode(T message);
         public abstract T Decode(Stream source);
@@ -21,7 +21,7 @@ namespace Vocabulary
     }
 
 
-    abstract class BinaryCodec<T> : ICodec<T>
+    public abstract class BinaryCodec<T> : ICodec<T>
     {
         public abstract void WriteBinaryData(BinaryWriter writer, T message);
         public abstract T ReadBinaryData(BinaryReader reader);
@@ -48,7 +48,7 @@ namespace Vocabulary
     }
 
 
-    class PacketBinaryCodec : BinaryCodec<Packet>
+    public class PacketBinaryCodec : BinaryCodec<Packet>
     {
         public override void WriteBinaryData(BinaryWriter writer, Packet message)
         {

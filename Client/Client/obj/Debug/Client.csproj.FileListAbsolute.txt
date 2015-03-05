@@ -1,1 +1,8 @@
 C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\bin\Debug\Client.exe.config
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\bin\Debug\Client.exe
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\bin\Debug\Client.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\bin\Debug\Vocabulary.dll
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\bin\Debug\Vocabulary.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\obj\Debug\Client.exe
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\obj\Debug\Client.pdb
+C:\Users\Marco\Dropbox\Universidad\4º\2º semestre\Aplicaciones\PL3\Client\Client\obj\Debug\Client.csprojResolveAssemblyReference.cache

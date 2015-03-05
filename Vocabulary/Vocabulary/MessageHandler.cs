@@ -37,7 +37,7 @@ namespace Vocabulary
 
         public Packet(int typeRaw, int bodyLength, byte[] body) {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
 
@@ -66,21 +66,11 @@ namespace Vocabulary
 
     public class NewFile : Packet
     {
-        private String _command = "PUT ";
-
         public NewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
-        }
-
-        public String Command
-        {
-            get
-            {
-                return _command;
-            }
         }
     }
 
@@ -91,7 +81,7 @@ namespace Vocabulary
         public AckNewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
 
@@ -112,7 +102,7 @@ namespace Vocabulary
         public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
     }
@@ -124,7 +114,7 @@ namespace Vocabulary
         public AckData(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
 
@@ -142,7 +132,7 @@ namespace Vocabulary
         public Discon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
     }
@@ -152,7 +142,7 @@ namespace Vocabulary
         public AckDiscon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
-            _bodyLength = BodyLength;
+            _bodyLength = bodyLength;
             _body = body;
         }
     }

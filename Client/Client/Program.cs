@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -9,13 +10,65 @@ using Vocabulary;
 
 namespace Client
 {
+
+    abstract class State
+    {
+        protected Client _context;
+
+        protected delegate void MessageHandler(PacketBodyType packetType);
+        private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
+
+        public State(Client context)
+        {
+            _context = context;
+        }
+
+        protected void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
+        {
+            _map.Add(packetType, handler);
+        }
+
+        public void HandleMessage(PacketBodyType packetType)
+        {
+            try
+            {
+                MessageHandler handler = _map[packetType];
+                handler.Invoke(packetType);
+            }
+            catch (KeyNotFoundException)
+            {
+                //OnUnknownMessage(type);
+            }
+        }
+    }
+
+
+    class WaitConfirmation : State
+    {
+        public WaitConfirmation(Client context) : base(context)
+        {
+            RegisterHandler(PacketBodyType.AckNewFile, OnAckNewFile);
+            //(PacketBodyType.Temp, SendRequest);
+        }
+
+        protected void OnAckNewFile(PacketBodyType packetType)
+        {
+
+        }
+    }
+
+
     class Client
     {
         private readonly String SERVER = "localhost";
         private readonly int SERVERPORT = 23456;
         private int sec = 1;
         private String strRec;
+        private byte[] bFile, bSent;
+        private State _state;
+
         UdpClient client = null;
+        PacketBinaryCodec encoding = new PacketBinaryCodec();
 
         public void Run()
         {
@@ -23,9 +76,21 @@ namespace Client
             {
                 client = new UdpClient();
 
-                Message transRequest = new TransferRequest("file.txt");
+                readFile();
 
-                //client.Send(sent, sent.Length, SERVER, SERVERPORT);
+                Packet newFile = new NewFile((int)PacketBodyType.NewFile, bFile.Length, bFile);
+
+                bSent = encoding.Encode(newFile);
+
+                client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
+
+                ChangeState(new WaitConfirmation(this));
+
+                for (; ; )
+                {
+                    PacketBodyType packetType = ReceivePacket();
+                    _state.HandleMessage(packetType);
+                }
 
             }
             catch (Exception e)
@@ -39,13 +104,30 @@ namespace Client
             Console.ReadKey();
         }
 
-
-        private void sendMessage()
+        public PacketBodyType ReceivePacket()
         {
-
+            return (PacketBodyType)4;
         }
 
+        public void ChangeState(State state)
+        {
+            _state = state;
+        }
 
+        private void readFile()
+        {
+            bFile = new byte[new FileInfo("fichero.txt").Length];
+
+            Console.WriteLine("BodyLength: " + bFile.Length);
+
+            FileStream fs = new FileStream("fichero.txt", FileMode.Open, FileAccess.Read);
+
+            for (int i = 0; i < bFile.Length; i++)
+            {
+                bFile[i] = (byte)fs.ReadByte();
+            }
+        }
+        
         private void processException(Exception e)
         {
             if (e.InnerException != null)

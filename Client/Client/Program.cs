@@ -14,37 +14,99 @@ namespace Client
 
     abstract class State
     {
-        protected Client _context;
-
         protected delegate void MessageHandler(PacketBodyType packetType);
         private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
 
-        public State(Client context)
-        {
-            _context = context;
-        }
+        public abstract void ChangeState();
 
-        protected void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
+        public abstract void Send();
+
+        public abstract void Close();
+
+        public abstract void ReceivePacket();
+
+        public virtual void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
         {
             _map.Add(packetType, handler);
         }
 
-        public void HandleMessage(PacketBodyType packetType)
+        public virtual void HandleMessage()
         {
             try
             {
-                MessageHandler handler = _map[packetType];
-                handler.Invoke(packetType);
+                Packet packet = Receive();
+
+                MessageHandler handler = _map[packet.Type];
+
+                if (handler == null)
+                {
+                    //OnUnknownMessage(type);
+                }
+                else
+                {
+                    handler.Invoke(packet.Type);
+                }
+                
             }
-            catch (KeyNotFoundException)
+            catch (SocketException e)
             {
-                //OnUnknownMessage(type);
+                if (e.SocketErrorCode == SocketError.TimedOut) {
+                    OnTimeout();
+                }
+                else if (e.SocketErrorCode == SocketError.ConnectionReset) {
+                    OnSocketClosed();
+                }
+                else {
+                    OnSocketException(e);
+                }
+            }
+            catch (PacketException e)
+            {
+                OnCorruptPacket(e);
+            }
+            catch (EndOfStreamException e)
+            {
+                OnCorruptPacket(e);
+            }
+            catch (Exception e)
+            {
+                OnUnknownException(e);
             }
         }
     }
 
+    class SenderState : State
+    {
+        protected Client _context;
+        protected State _state;
 
-    class WaitConfirmation : State
+        public SenderState(Client context)
+        {
+            _context = context;
+        }
+
+        public override void ChangeState(State state)
+        {
+            _context.ChangeState(state);
+        }
+
+        public override void Send()
+        {
+            _context.Send();
+        }
+
+        public override PacketBodyType ReceivePacket()
+        {
+            return _context.ReceivePacket();
+        }
+
+        public override void Close()
+        {
+            _context.Close();
+        }
+    }
+
+    class WaitConfirmation : SenderState
     {
         public WaitConfirmation(Client context) : base(context)
         {
@@ -65,7 +127,7 @@ namespace Client
     }
 
 
-    class SendData : State
+    class SendData : SenderState
     {
         public SendData(Client context) : base(context)
         {
@@ -87,7 +149,7 @@ namespace Client
         private String strRec;
         private byte[] bFile, bSent, bReceived;
         private readonly String fichName = "P3.jpg";
-        private State _state;
+        private SenderState _state;
 
         UdpClient client = null;
         PacketBinaryCodec encoding = new PacketBinaryCodec();
@@ -126,13 +188,18 @@ namespace Client
             Console.ReadKey();
         }
 
-        public PacketBodyType ReceivePacket()
+        private int ReadFile()
         {
-            IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
+            FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
 
-            bReceived = client.Receive(ref remoteIPEndPoint);
+            bFile = new byte[512];
 
-            return encoding.Decode(bReceived).Type;
+            return fs.Read(bFile, 0, 512);
+        }
+
+        public void ChangeState(State state)
+        {
+            _state = state;
         }
 
         public void Send()
@@ -149,28 +216,23 @@ namespace Client
 
             if (length < 512)
             {
-                Packet discon = new Discon((int)PacketBodyType.Discon,0,null);
+                Packet discon = new Discon((int)PacketBodyType.Discon, 0, null);
                 ChangeState(new WaitConfirmation(this));
             }
         }
 
-        private int ReadFile()
+        public PacketBodyType ReceivePacket()
         {
-            FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
+            IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-            bFile = new byte[512];
+            bReceived = client.Receive(ref remoteIPEndPoint);
 
-            return fs.Read(bFile, 0, 512);
+            return encoding.Decode(bReceived).Type;
         }
 
         public void Close()
         {
             client.Close();
-        }
-
-        public void ChangeState(State state)
-        {
-            _state = state;
         }
         
         private void processException(Exception e)

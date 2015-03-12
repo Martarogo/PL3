@@ -13,37 +13,126 @@ namespace Servidor
 {
     abstract class State
     {
-        protected Server _context;
-
-        protected delegate void MessageHandler(PacketBodyType packetType);
+        protected delegate void MessageHandler(Packet packet);
         private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
 
-        public State(Server context)
-        {
-            _context = context;
-        }
+        public abstract void ChangeState(ReceiverState state);
+
+        public abstract void SendConfirmation(int packetType);
+
+        public abstract Packet ReceivePacket();
 
         protected void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
         {
             _map.Add(packetType, handler);
         }
 
-        public void HandleMessage(PacketBodyType packetType)
+        public void HandleMessage()
         {
             try
             {
-                MessageHandler handler = _map[packetType];
-                handler.Invoke(packetType);
+                Packet packet = ReceivePacket();
+
+                MessageHandler handler = _map[packet.Type];
+
+                if (handler == null)
+                {
+                    OnUnknownMessage(packet);
+                }
+                else
+                {
+                    handler.Invoke(packet);
+                }
+                
             }
-            catch (KeyNotFoundException)
+            catch (SocketException e)
             {
-                //OnUnknownMessage(type);
+                if (e.SocketErrorCode == SocketError.TimedOut)
+                {
+                    OnTimeout();
+                }
+                else if (e.SocketErrorCode == SocketError.ConnectionReset)
+                {
+                    OnSocketClosed();
+                }
+                else
+                {
+                    OnSocketException(e);
+                }
             }
+            /*catch (MessageException e)
+            {
+                OnCorruptPacket(e);
+            }*/
+            catch (EndOfStreamException e)
+            {
+                OnCorruptPacket(e);
+            }
+            catch (Exception e)
+            {
+                OnUnknownException(e);
+            }
+        }
+
+        public void OnUnknownMessage(Packet packet)
+        {
+
+        }
+
+        public void OnTimeout()
+        {
+
+        }
+
+        public void OnSocketClosed()
+        {
+
+        }
+
+        public void OnSocketException(Exception e)
+        {
+
+        }
+
+        public void OnCorruptPacket(Exception e)
+        {
+
+        }
+
+        public void OnUnknownException(Exception e)
+        {
+
         }
     }
 
 
-    class Wait : State
+    class ReceiverState : State
+    {
+        protected Server _context;
+        protected State _state;
+
+        public ReceiverState(Server context)
+        {
+            _context = context;
+        }
+
+        public override void ChangeState(ReceiverState state)
+        {
+            _context.ChangeState(state);
+        }
+
+        public override void SendConfirmation(int packetType)
+        {
+            _context.SendConfirmation(packetType);
+        }
+
+        public override Packet ReceivePacket()
+        {
+            return _context.ReceivePacket();
+        }
+    }
+
+    class Wait : ReceiverState
     {
         public Wait(Server context) : base(context)
         {
@@ -52,18 +141,18 @@ namespace Servidor
             RegisterHandler(PacketBodyType.Discon, OnDiscon);
         }
 
-        protected void OnNewFile(PacketBodyType packetType)
+        protected void OnNewFile(Packet packet)
         {
             _context.GetName();
             _context.SendConfirmation((int)PacketBodyType.AckNewFile);
         }
 
-        protected void OnData(PacketBodyType packetType)
+        protected void OnData(Packet packet)
         {
             _context.CheckData();
         }
 
-        protected void OnDiscon(PacketBodyType packetType)
+        protected void OnDiscon(Packet packet)
         {
             _context.SendConfirmation((int)PacketBodyType.AckDiscon);
         }
@@ -105,8 +194,7 @@ namespace Servidor
             {
                 try
                 {
-                    PacketBodyType packetType = ReceivePacket();
-                    _state.HandleMessage(packetType);
+                    _state.HandleMessage();
                 }
                 catch (Exception e)
                 {
@@ -121,13 +209,13 @@ namespace Servidor
             fichName = Encoding.UTF8.GetString(receivedPacket.Body, 0, receivedPacket.BodyLength);
         }
 
-        public PacketBodyType ReceivePacket()
+        public Packet ReceivePacket()
         {
             bReceived = client.Receive(ref remoteIPEndPoint);
 
             receivedPacket = encoding.Decode(bReceived);
 
-            return receivedPacket.Type;
+            return receivedPacket;
         }
 
         public void SendConfirmation(int packetType)
@@ -162,7 +250,6 @@ namespace Servidor
         {
             FileStream fs = new FileStream(fichName, FileMode.Create, FileAccess.Write);
 
-            fs.Write()
         }
 
         private void SendAck()

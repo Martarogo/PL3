@@ -14,18 +14,18 @@ namespace Client
 
     abstract class State
     {
-        protected delegate void MessageHandler(PacketBodyType packetType);
+        protected delegate void MessageHandler(Packet packet);
         private Dictionary<PacketBodyType, MessageHandler> _map = new Dictionary<PacketBodyType, MessageHandler>();
 
-        public abstract void ChangeState();
+        public abstract void ChangeState(SenderState state);
 
         public abstract void Send();
 
         public abstract void Close();
 
-        public abstract void ReceivePacket();
+        public abstract Packet ReceivePacket();
 
-        public virtual void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
+        protected virtual void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
         {
             _map.Add(packetType, handler);
         }
@@ -34,36 +34,39 @@ namespace Client
         {
             try
             {
-                Packet packet = Receive();
+                Packet packet = ReceivePacket();
 
                 MessageHandler handler = _map[packet.Type];
 
                 if (handler == null)
                 {
-                    //OnUnknownMessage(type);
+                    OnUnknownMessage(packet);
                 }
                 else
                 {
-                    handler.Invoke(packet.Type);
+                    handler.Invoke(packet);
                 }
                 
             }
             catch (SocketException e)
             {
-                if (e.SocketErrorCode == SocketError.TimedOut) {
+                if (e.SocketErrorCode == SocketError.TimedOut)
+                {
                     OnTimeout();
                 }
-                else if (e.SocketErrorCode == SocketError.ConnectionReset) {
+                else if (e.SocketErrorCode == SocketError.ConnectionReset)
+                {
                     OnSocketClosed();
                 }
-                else {
+                else
+                {
                     OnSocketException(e);
                 }
             }
-            catch (PacketException e)
+            /*catch (MessageException e)
             {
                 OnCorruptPacket(e);
-            }
+            }*/
             catch (EndOfStreamException e)
             {
                 OnCorruptPacket(e);
@@ -72,6 +75,36 @@ namespace Client
             {
                 OnUnknownException(e);
             }
+        }
+
+        public void OnUnknownMessage(Packet packet)
+        {
+
+        }
+
+        public void OnTimeout()
+        {
+
+        }
+
+        public void OnSocketClosed()
+        {
+
+        }
+
+        public void OnSocketException(Exception e)
+        {
+
+        }
+
+        public void OnCorruptPacket(Exception e)
+        {
+
+        }
+
+        public void OnUnknownException(Exception e)
+        {
+
         }
     }
 
@@ -85,7 +118,7 @@ namespace Client
             _context = context;
         }
 
-        public override void ChangeState(State state)
+        public override void ChangeState(SenderState state)
         {
             _context.ChangeState(state);
         }
@@ -95,7 +128,7 @@ namespace Client
             _context.Send();
         }
 
-        public override PacketBodyType ReceivePacket()
+        public override Packet ReceivePacket()
         {
             return _context.ReceivePacket();
         }
@@ -114,13 +147,13 @@ namespace Client
             RegisterHandler(PacketBodyType.AckDiscon, OnAckDiscon);
         }
 
-        protected void OnAckNewFile(PacketBodyType packetType)
+        protected void OnAckNewFile(Packet packet)
         {
             _context.Send();
             _context.ChangeState(new SendData(_context));
         }
 
-        protected void OnAckDiscon(PacketBodyType packetType)
+        protected void OnAckDiscon(Packet packet)
         {
             _context.Close();
         }
@@ -134,7 +167,7 @@ namespace Client
             RegisterHandler(PacketBodyType.AckData, OnAckData);
         }
 
-        protected void OnAckData(PacketBodyType packetType)
+        protected void OnAckData(Packet packet)
         {
             _context.Send();
         }
@@ -172,8 +205,8 @@ namespace Client
 
                 for (; ; )
                 {
-                    PacketBodyType packetType = ReceivePacket();
-                    _state.HandleMessage(packetType);
+                    //PacketBodyType packetType = ReceivePacket();
+                    _state.HandleMessage();
                 }
 
             }
@@ -197,7 +230,7 @@ namespace Client
             return fs.Read(bFile, 0, 512);
         }
 
-        public void ChangeState(State state)
+        public void ChangeState(SenderState state)
         {
             _state = state;
         }
@@ -221,13 +254,13 @@ namespace Client
             }
         }
 
-        public PacketBodyType ReceivePacket()
+        public Packet ReceivePacket()
         {
             IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
             bReceived = client.Receive(ref remoteIPEndPoint);
 
-            return encoding.Decode(bReceived).Type;
+            return encoding.Decode(bReceived);
         }
 
         public void Close()

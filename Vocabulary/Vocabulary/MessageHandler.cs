@@ -48,6 +48,7 @@ namespace Vocabulary
                 return _type;
             }
         }
+
         public int BodyLength
         {
             get
@@ -55,6 +56,7 @@ namespace Vocabulary
                 return _bodyLength;
             }
         }
+
         public byte[] Body
         {
             get
@@ -76,30 +78,21 @@ namespace Vocabulary
 
     public class AckNewFile : Packet
     {
-        private String _command = "OK";
-
         public AckNewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
         }
-
-        public String Command
-        {
-            get
-            {
-                return _command;
-            }
-        }
     }
 
     public class Data : Packet
     {
-        private int _nSec = 0;
+        private int _nSec;
 
-        public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public Data(int nSec, int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
+            _nSec = nSec;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;

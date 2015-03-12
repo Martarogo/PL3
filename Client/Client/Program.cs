@@ -83,10 +83,10 @@ namespace Client
     {
         private readonly String SERVER = "localhost";
         private readonly int SERVERPORT = 23456;
-        private int sec = 1;
+        private int nSec = 1;
         private String strRec;
         private byte[] bFile, bSent, bReceived;
-        private readonly String fichName = "fichero.txt";
+        private readonly String fichName = "P3.jpg";
         private State _state;
 
         UdpClient client = null;
@@ -139,7 +139,9 @@ namespace Client
         {
             int length = ReadFile();
 
-            Packet data = new Data((int)PacketBodyType.Data, length, bFile);
+            Packet data = new Data(nSec, (int)PacketBodyType.Data, length, bFile);
+
+            nSec++;
 
             bSent = encoding.Encode(data);
 
@@ -155,11 +157,16 @@ namespace Client
         private int ReadFile()
         {
             FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
-            
+
+            bFile = new byte[512];
+
             return fs.Read(bFile, 0, 512);
         }
 
-        private void Close()
+        public void Close()
+        {
+            client.Close();
+        }
 
         public void ChangeState(State state)
         {

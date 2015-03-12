@@ -79,39 +79,39 @@ namespace Client
 
         public void OnUnknownMessage(Packet packet)
         {
-
+            Console.WriteLine("Unknown Message:\n" +
+                                    "Type: " + packet.Type);
         }
 
         public void OnTimeout()
         {
-
+            Console.WriteLine("TImeout");
         }
 
         public void OnSocketClosed()
         {
-
+            Console.WriteLine("Error: closed socket");
         }
 
         public void OnSocketException(Exception e)
         {
-
+            Console.WriteLine("Socket exception: " + e.Message);
         }
 
         public void OnCorruptPacket(Exception e)
         {
-
+            Console.WriteLine("Corrupt packet: " + e.Message);
         }
 
         public void OnUnknownException(Exception e)
         {
-
+            Console.WriteLine("Unknown exception: " + e.Message);
         }
     }
 
     class SenderState : State
     {
         protected Client _context;
-        protected State _state;
 
         public SenderState(Client context)
         {
@@ -235,7 +235,7 @@ namespace Client
             _state = state;
         }
 
-        public void Send()
+        public int GetFileBytes()
         {
             int length = ReadFile();
 
@@ -245,13 +245,27 @@ namespace Client
 
             bSent = encoding.Encode(data);
 
+            return length;
+        }
+
+        public void Send()
+        {
+            int length = GetFileBytes();
+
             client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
+
+            SetTimer();
 
             if (length < 512)
             {
                 Packet discon = new Discon((int)PacketBodyType.Discon, 0, null);
                 ChangeState(new WaitConfirmation(this));
             }
+        }
+
+        public void SetTimer()
+        {
+            client.Client.ReceiveTimeout = 1000;
         }
 
         public Packet ReceivePacket()

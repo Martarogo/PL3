@@ -31,6 +31,7 @@ namespace Vocabulary
 
     public class Packet
     {
+        protected int _nSec;
         protected PacketBodyType _type;
         protected int _bodyLength;
         protected byte[] _body;
@@ -39,6 +40,14 @@ namespace Vocabulary
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
+        }
+
+        public int NSec
+        {
+            get
+            {
+                return _nSec;
+            }
         }
 
         public PacketBodyType Type
@@ -88,8 +97,6 @@ namespace Vocabulary
 
     public class Data : Packet
     {
-        private int _nSec;
-
         public Data(int nSec, int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
             _nSec = nSec;

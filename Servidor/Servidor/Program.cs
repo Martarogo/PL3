@@ -76,32 +76,33 @@ namespace Servidor
 
         public void OnUnknownMessage(Packet packet)
         {
-
+            Console.WriteLine("Unknown Message:\n" +
+                                    "Type: " + packet.Type);
         }
 
         public void OnTimeout()
         {
-
+            Console.WriteLine("TImeout");
         }
 
         public void OnSocketClosed()
         {
-
+            Console.WriteLine("Error: closed socket");
         }
 
         public void OnSocketException(Exception e)
         {
-
+            Console.WriteLine("Socket exception: " + e.Message);
         }
 
         public void OnCorruptPacket(Exception e)
         {
-
+            Console.WriteLine("Corrupt packet: " + e.Message);
         }
 
         public void OnUnknownException(Exception e)
         {
-
+            Console.WriteLine("Unknown exception: " + e.Message);
         }
     }
 
@@ -232,7 +233,7 @@ namespace Servidor
 
         public void CheckData()
         {
-            Data recData = (Data)receivedPacket;
+            Packet recData = receivedPacket;
 
             if (recData.NSec == sec)
             {

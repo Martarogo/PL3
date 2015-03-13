@@ -97,20 +97,11 @@ namespace Vocabulary
 
     public class Data : Packet
     {
-        public Data(int nSec, int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
         {
-            _nSec = nSec;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
-        }
-
-        public int NSec
-        {
-            get
-            {
-                return _nSec;
-            }
         }
     }
 

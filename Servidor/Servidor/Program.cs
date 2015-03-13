@@ -170,7 +170,7 @@ namespace Servidor
         private State _state;
         private Packet receivedPacket;
         private String fichName;
-
+        int asdf;
         private UdpClient client = null;
         PacketBinaryCodec encoding = new PacketBinaryCodec();
         IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -233,9 +233,7 @@ namespace Servidor
 
         public void CheckData()
         {
-            Packet recData = receivedPacket;
-
-            if (recData.NSec == sec)
+            if (receivedPacket.NSec == sec)
             {
                 WriteFile();
                 SendAck();
@@ -243,7 +241,7 @@ namespace Servidor
             }
             else
             {
-                Console.WriteLine("Se esperaba ACK " + sec + " y se recibió " + recData.NSec);
+                Console.WriteLine("Se esperaba ACK " + sec + " y se recibió " + receivedPacket.NSec);
             }
         }
 
@@ -251,6 +249,7 @@ namespace Servidor
         {
             FileStream fs = new FileStream(fichName, FileMode.Create, FileAccess.Write);
 
+            fs.Write(receivedPacket.Body, 0, receivedPacket.BodyLength);
         }
 
         private void SendAck()

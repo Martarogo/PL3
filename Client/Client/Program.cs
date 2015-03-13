@@ -225,7 +225,15 @@ namespace Client
         {
             FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
 
+            byte[] by = BitConverter.GetBytes(nSec);
+
             bFile = new byte[512];
+
+            fs.Read(bFile, 0, 512);
+
+            byte[] c = by.Concat(bFile).ToArray();
+
+            Console.WriteLine("asdfas: " + c.Length);
 
             return fs.Read(bFile, 0, 512);
         }

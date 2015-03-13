@@ -59,6 +59,7 @@ namespace Vocabulary
 
         public override Packet ReadBinaryData(BinaryReader reader)
         {
+
             int typeRaw = reader.ReadInt32();
             int bodyLength = reader.ReadInt32();
 

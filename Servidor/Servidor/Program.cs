@@ -18,7 +18,7 @@ namespace Servidor
 
         public abstract void ChangeState(ReceiverState state);
 
-        public abstract void SendConfirmation(int packetType);
+        public abstract void SendConfirmation(int packetType, int nSec);
 
         public abstract Packet ReceivePacket();
 
@@ -122,9 +122,9 @@ namespace Servidor
             _context.ChangeState(state);
         }
 
-        public override void SendConfirmation(int packetType)
+        public override void SendConfirmation(int packetType, int nSec)
         {
-            _context.SendConfirmation(packetType);
+            _context.SendConfirmation(packetType, nSec);
         }
 
         public override Packet ReceivePacket()
@@ -145,7 +145,7 @@ namespace Servidor
         protected void OnNewFile(Packet packet)
         {
             _context.GetName();
-            _context.SendConfirmation((int)PacketBodyType.AckNewFile);
+            _context.SendConfirmation((int)PacketBodyType.AckNewFile, 0);
         }
 
         protected void OnData(Packet packet)
@@ -155,7 +155,9 @@ namespace Servidor
 
         protected void OnDiscon(Packet packet)
         {
-            _context.SendConfirmation((int)PacketBodyType.AckDiscon);
+            _context.SendConfirmation((int)PacketBodyType.AckDiscon, 0);
+            _context.CloseFileStream();
+            Console.WriteLine("Transferencia de archivo completada");
         }
     }
 
@@ -170,7 +172,8 @@ namespace Servidor
         private State _state;
         private Packet receivedPacket;
         private String fichName;
-        int asdf;
+        private FileStream fs;
+
         private UdpClient client = null;
         PacketBinaryCodec encoding = new PacketBinaryCodec();
         IPEndPoint remoteIPEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -208,6 +211,7 @@ namespace Servidor
         public void GetName()
         {
             fichName = Encoding.UTF8.GetString(receivedPacket.Body, 0, receivedPacket.BodyLength);
+            fs = new FileStream(fichName, FileMode.Create, FileAccess.Write);
         }
 
         public Packet ReceivePacket()
@@ -219,24 +223,39 @@ namespace Servidor
             return receivedPacket;
         }
 
-        public void SendConfirmation(int packetType)
+        public void CloseFileStream()
+        {
+            fs.Close();
+        }
+
+        public void SendConfirmation(int packetType, int nSec)
         {
             byte[] body = Encoding.UTF8.GetBytes("OK");
             int bodyLength = body.Length;
 
-            Packet newFileAck = new AckNewFile(packetType, bodyLength, body);
+            Packet Ack = new Packet(nSec, packetType, bodyLength, body);
 
-            bSent = encoding.Encode(newFileAck);
+            bSent = encoding.Encode(Ack);
 
             client.Send(bSent, bSent.Length, remoteIPEndPoint);          
         }
+
+        /*private void SendAck()
+        {
+            Packet dataAck = new AckData(sec, (int)PacketBodyType.AckData, 0, null);
+
+            bSent = encoding.Encode(dataAck);
+
+            client.Send(bSent, bSent.Length, remoteIPEndPoint);
+        }
+        */
 
         public void CheckData()
         {
             if (receivedPacket.NSec == sec)
             {
                 WriteFile();
-                SendAck();
+                SendConfirmation((int)PacketBodyType.AckData, sec);
                 sec++;
             }
             else
@@ -247,18 +266,8 @@ namespace Servidor
 
         private void WriteFile()
         {
-            FileStream fs = new FileStream(fichName, FileMode.Create, FileAccess.Write);
-
             fs.Write(receivedPacket.Body, 0, receivedPacket.BodyLength);
-        }
-
-        private void SendAck()
-        {
-            Packet dataAck = new AckData((int)PacketBodyType.AckData, 0, null);
-
-            bSent = encoding.Encode(dataAck);
-
-            client.Send(bSent, bSent.Length, remoteIPEndPoint); 
+            Console.WriteLine("Bloque escrito");
         }
 
         public void ChangeState(State state)

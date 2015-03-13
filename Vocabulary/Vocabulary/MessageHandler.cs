@@ -16,19 +16,6 @@ namespace Vocabulary
         AckDiscon = 30
     };
 
-    public enum Sense
-    {
-        SenderToReceiver = 1,
-        ReceiverToSender = 2,
-    };
-
-    public enum Content
-    {
-        Request = 1,
-        Confirmation = 2,
-        Data = 3,
-    };
-
     public class Packet
     {
         protected int _nSec;
@@ -36,7 +23,8 @@ namespace Vocabulary
         protected int _bodyLength;
         protected byte[] _body;
 
-        public Packet(int typeRaw, int bodyLength, byte[] body) {
+        public Packet(int nSec, int typeRaw, int bodyLength, byte[] body) {
+            _nSec = nSec;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
@@ -77,8 +65,9 @@ namespace Vocabulary
 
     public class NewFile : Packet
     {
-        public NewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public NewFile(int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = 0;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
@@ -87,8 +76,9 @@ namespace Vocabulary
 
     public class AckNewFile : Packet
     {
-        public AckNewFile(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public AckNewFile(int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = 0;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
@@ -97,8 +87,9 @@ namespace Vocabulary
 
     public class Data : Packet
     {
-        public Data(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public Data(int nSec, int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = nSec;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
@@ -107,28 +98,20 @@ namespace Vocabulary
 
     public class AckData : Packet
     {
-        private int _nSec;
-
-        public AckData(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public AckData(int nSec, int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = nSec;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
-        }
-
-        public int NSec
-        {
-            get
-            {
-                return _nSec;
-            }
         }
     }
 
     public class Discon : Packet
     {
-        public Discon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public Discon(int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = 0;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;
@@ -137,8 +120,9 @@ namespace Vocabulary
 
     public class AckDiscon : Packet
     {
-        public AckDiscon(int typeRaw, int bodyLength, byte[] body) : base(typeRaw, bodyLength, body)
+        public AckDiscon(int typeRaw, int bodyLength, byte[] body) : base(0, typeRaw, bodyLength, body)
         {
+            _nSec = 0;
             _type = (PacketBodyType)typeRaw;
             _bodyLength = bodyLength;
             _body = body;

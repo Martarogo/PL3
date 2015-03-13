@@ -25,6 +25,8 @@ namespace Client
 
         public abstract Packet ReceivePacket();
 
+        public abstract void OnTimeout(Packet packet);
+
         protected virtual void RegisterHandler(PacketBodyType packetType, MessageHandler handler)
         {
             _map.Add(packetType, handler);
@@ -32,9 +34,10 @@ namespace Client
 
         public virtual void HandleMessage()
         {
+            Packet packet = null;
             try
             {
-                Packet packet = ReceivePacket();
+                packet = ReceivePacket();
 
                 MessageHandler handler = _map[packet.Type];
 
@@ -52,7 +55,7 @@ namespace Client
             {
                 if (e.SocketErrorCode == SocketError.TimedOut)
                 {
-                    OnTimeout();
+                    OnTimeout(packet);
                 }
                 else if (e.SocketErrorCode == SocketError.ConnectionReset)
                 {
@@ -83,11 +86,6 @@ namespace Client
                                     "Type: " + packet.Type);
         }
 
-        public void OnTimeout()
-        {
-            Console.WriteLine("TImeout");
-        }
-
         public void OnSocketClosed()
         {
             Console.WriteLine("Error: closed socket");
@@ -116,6 +114,19 @@ namespace Client
         public SenderState(Client context)
         {
             _context = context;
+        }
+
+        public override void OnTimeout(Packet packet)
+        {
+            Console.WriteLine("Timeout");
+            if (packet.Type == PacketBodyType.Discon)
+            {
+                if (_context.DisconCounter == 5)
+                {
+                    _context.Close();
+                }
+                _context.DisconCounter = 0;
+            }
         }
 
         public override void ChangeState(SenderState state)
@@ -149,8 +160,8 @@ namespace Client
 
         protected void OnAckNewFile(Packet packet)
         {
-            _context.Send();
             _context.ChangeState(new SendData(_context));
+            _context.Send();
         }
 
         protected void OnAckDiscon(Packet packet)
@@ -169,7 +180,7 @@ namespace Client
 
         protected void OnAckData(Packet packet)
         {
-            _context.Send();
+            _context.CheckAck(packet);
         }
     }
 
@@ -183,14 +194,19 @@ namespace Client
         private byte[] bFile, bSent, bReceived;
         private readonly String fichName = "P3.jpg";
         private SenderState _state;
+        private int sentArrayLength;
+        private FileStream fs;
+        private bool finish = false;
+        private int disconCounter;
 
         UdpClient client = null;
         PacketBinaryCodec encoding = new PacketBinaryCodec();
-
+        
         public void Run()
         {
             try
             {
+                fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
                 client = new UdpClient();
 
                 bFile = Encoding.UTF8.GetBytes(fichName);
@@ -203,12 +219,12 @@ namespace Client
 
                 ChangeState(new WaitConfirmation(this));
 
-                for (; ; )
+                while (!finish)
                 {
-                    //PacketBodyType packetType = ReceivePacket();
                     _state.HandleMessage();
                 }
 
+                Console.WriteLine("Transferencia del archivo finalizada");
             }
             catch (Exception e)
             {
@@ -221,19 +237,21 @@ namespace Client
             Console.ReadKey();
         }
 
+        public int DisconCounter
+        {
+            get
+            {
+                return disconCounter;
+            }
+            set
+            {
+                disconCounter++;
+            }
+        }
+
         private int ReadFile()
         {
-            FileStream fs = new FileStream(fichName, FileMode.Open, FileAccess.Read);
-
-            byte[] by = BitConverter.GetBytes(nSec);
-
             bFile = new byte[512];
-
-            fs.Read(bFile, 0, 512);
-
-            byte[] c = by.Concat(bFile).ToArray();
-
-            Console.WriteLine("asdfas: " + c.Length);
 
             return fs.Read(bFile, 0, 512);
         }
@@ -249,26 +267,54 @@ namespace Client
 
             Packet data = new Data(nSec, (int)PacketBodyType.Data, length, bFile);
 
-            nSec++;
-
             bSent = encoding.Encode(data);
 
             return length;
         }
 
+        public void CheckAck(Packet packet)
+        {
+            int secRec = packet.NSec;
+
+            if (secRec != nSec)
+            {
+                client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
+            }
+            else
+            {
+                if (sentArrayLength < 512)
+                {
+                    byte[] body = Encoding.UTF8.GetBytes("OK");
+                    int bodyLength = body.Length;
+
+                    Packet discon = new Discon((int)PacketBodyType.Discon, bodyLength, body);
+
+                    bSent = encoding.Encode(discon);
+
+                    client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
+
+                    disconCounter++;
+
+                    SetTimer();
+
+                    ChangeState(new WaitConfirmation(this));
+                }
+                else
+                {
+                    nSec++;
+                    Send();
+                }
+                
+            }
+        }
+
         public void Send()
         {
-            int length = GetFileBytes();
+            sentArrayLength = GetFileBytes();
 
             client.Send(bSent, bSent.Length, SERVER, SERVERPORT);
 
             SetTimer();
-
-            if (length < 512)
-            {
-                Packet discon = new Discon((int)PacketBodyType.Discon, 0, null);
-                ChangeState(new WaitConfirmation(this));
-            }
         }
 
         public void SetTimer()
@@ -287,6 +333,7 @@ namespace Client
 
         public void Close()
         {
+            finish = true;
             client.Close();
         }
         
